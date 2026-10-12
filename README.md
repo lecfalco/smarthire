@@ -1,201 +1,157 @@
-# SmartHire — AI-Powered Applicant Screening & Resume Sorting Platform
+# SmartHire — AI-Powered Applicant Screening Platform
 
-> **Course:** Advanced Java & Enterprise Application Development  
-> **Team Members:** Kshitij, Aditya, Varad, Devika  
-> **Architecture:** Microservices (Java Spring Boot 3 + Python FastAPI + React Frontend)
-
----
-
-## 📌 Executive Summary
-
-**SmartHire** is an enterprise-grade applicant tracking and resume screening system developed as a collaborative group project. The platform automatically ingests applicant resumes (PDF/TXT), parses metadata and candidate competencies, evaluates qualification alignment against job requirements through an intelligent scoring engine, and categorizes candidates into **Shortlisted**, **Talent Pool**, or **Rejected** tiers.
-
-The system is architected around a distributed, decoupled pattern:
-1. **Java Spring Boot Backend (`smart-hire-backend`)**: Enterprise business logic, JPA persistence with H2, RESTful routing, and inter-service client orchestration.
-2. **Python AI Microservice (`smart-hire-ai-service`)**: NLP parsing, optical skill matching, and LLM scoring engine.
-3. **Frontend Dashboard (`frontend`)**: Single-Page Application (SPA) offering an interactive HR workspace.
+An enterprise-grade applicant screening and resume sorting platform built with a high-performance decoupled microservice architecture:
+- **`smart-hire-backend`**: Core Java Spring Boot 3 enterprise application managing jobs, candidate records, persistence (JPA/Hibernate + H2), and orchestrating business workflows.
+- **`smart-hire-ai-service`**: Dedicated Python microservice running FastAPI, responsible for resume text extraction (PDF & TXT) and automated scoring (OpenAI GPT-4o-mini with local keyword matching fallback).
+- **`frontend`**: Modern React dashboard for recruiters and HR professionals.
 
 ---
 
-## 👥 Team Work Breakdown & Contribution Matrix
-
-The workload was distributed cleanly across 4 core engineering modules according to software development lifecycle (SDLC) domains and individual component ownership:
+## 📁 Project Structure
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│                             PROJECT RESPONSIBILITIES                             │
-├───────────────┬────────────────────────────────────┬─────────────────────────────┤
-│ Team Member   │ Primary Role                       │ Core Deliverables           │
-├───────────────┼────────────────────────────────────┼─────────────────────────────┤
-│ Aditya        │ Core Java Backend & Microservice   │ Spring Boot Application,    │
-│               │ Orchestration Lead                 │ CandidateService, HTTP      │
-│               │                                    │ RestTemplate Client, Fallback│
-├───────────────┼────────────────────────────────────┼─────────────────────────────┤
-│ Kshitij       │ AI Microservice & NLP Lead         │ Python FastAPI Service,     │
-│               │                                    │ PDF/TXT Parser, LLM &       │
-│               │                                    │ Keyword Scoring Engine      │
-├───────────────┼────────────────────────────────────┼─────────────────────────────┤
-│ Varad         │ Java API Controller & Database Lead│ REST Controllers, H2/JPA    │
-│               │                                    │ Data Layer, Repositories,   │
-│               │                                    │ Seed Data, API Endpoints    │
-├───────────────┼────────────────────────────────────┼─────────────────────────────┤
-│ Devika        │ Frontend Dashboard & QA Lead       │ React UI Components, API    │
-│               │                                    │ Integration, Error Handling,│
-│               │                                    │ System Testing & Docs       │
-└───────────────┴────────────────────────────────────┴─────────────────────────────┘
-```
-
----
-
-### 1. Aditya — Core Java Backend Architecture & Microservice Integration
-**Focus Area:** Java Spring Boot business logic, service layer, inter-service networking, and fault tolerance.
-
-* **Key Deliverables & Files:**
-  * [`CandidateService.java`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-backend/src/main/java/com/smarthire/service/CandidateService.java): Implemented core domain workflows for resume ingestion and candidate evaluation.
-  * **Inter-Service Orchestration:** Configured Spring's `RestTemplate` to perform multipart HTTP communication with the Python microservice (`/parse-and-score`) using custom `ByteArrayResource` streams.
-  * **Fault Tolerance & Graceful Degradation:** Built circuit-resilient fallback handlers so that if the Python microservice is temporarily unavailable or network latency spikes, candidates are safely stored with provisional scores rather than failing the request.
-  * **Maven Build & Packaging:** Configured `pom.xml`, dependency management (`spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `h2`), and configured portable wrapper tools (`mvnw`, `mvnw.cmd`).
-
----
-
-### 2. Kshitij — AI Microservice, NLP Parsing & Scoring Engine
-**Focus Area:** Python FastAPI microservice, resume document processing, and algorithm scoring.
-
-* **Key Deliverables & Files:**
-  * [`main.py`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-ai-service/main.py): Built high-concurrency asynchronous FastAPI server operating on port `8001`.
-  * [`parser.py`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-ai-service/parser.py): Developed binary PDF parsing with `pdfplumber`, regex text normalization, candidate contact information extraction (email/name heuristics), and custom skill dictionary scanning.
-  * [`scorer.py`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-ai-service/scorer.py): Created dual-tier scoring engine:
-    * **Primary:** OpenAI GPT-4o-mini prompt orchestration for deep semantic matching and qualitative fit summary generation.
-    * **Fallback:** Zero-cost local keyword overlap algorithm for deterministic offline operation.
-  * **Requirements & Environment:** Setup `requirements.txt` and `.env` configuration.
-
----
-
-### 3. Varad — Java REST API Controllers, Data Persistence & ORM Layer
-**Focus Area:** REST API contract design, Spring Data JPA entity modeling, and database persistence.
-
-* **Key Deliverables & Files:**
-  * [`JobController.java`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-backend/src/main/java/com/smarthire/controller/JobController.java): Implemented REST endpoints with `@CrossOrigin` support:
-    * `GET /jobs`, `POST /jobs`, `GET /jobs/{id}`, `DELETE /jobs/{id}`
-    * `POST /jobs/{id}/apply` (Multipart resume upload)
-    * `GET /jobs/{id}/candidates` (Sorted candidate rankings)
-    * `GET /talent-pool` & `GET /talent-pool/search` (Near-miss filtering)
-    * `GET /stats` (Dashboard aggregate statistics)
-  * [`Job.java`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-backend/src/main/java/com/smarthire/model/Job.java) & [`Candidate.java`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-backend/src/main/java/com/smarthire/model/Candidate.java): Designed JPA entity models with `@Entity`, `@Table`, lifecycle hooks (`@PrePersist`), and text column definitions.
-  * [`JobRepository.java`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-backend/src/main/java/com/smarthire/repository/JobRepository.java) & [`CandidateRepository.java`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-backend/src/main/java/com/smarthire/repository/CandidateRepository.java): Implemented Spring Data JPA repository interfaces with derived query methods (e.g., `findByJobIdOrderByMatchScoreDesc`).
-  * [`SmartHireApplication.java`](file:///c:/RESUME%20SORTER%20PROJECT%20CLAUDE/smart-hire-project/smart-hire-backend/src/main/java/com/smarthire/SmartHireApplication.java) (Data Seeder): Programmed initial database seeding (`CommandLineRunner`) with mock job openings for instant demo readiness.
-
----
-
-### 4. Devika — Frontend Client, API Integration & System QA
-**Focus Area:** React SPA user interface, client-side API layer, system testing, and documentation.
-
-* **Key Deliverables & Files:**
-  * **Frontend UI Components (`frontend/src/components/`)**:
-    * `Dashboard.jsx`: Job overview, candidate screening tables, and talent pool navigator.
-    * `JobForm.jsx`: Modal and input controls for authoring job requisitions.
-    * `CandidateCard.jsx`: Visual badges for score tiers (Shortlisted, Talent Pool, Rejected).
-  * **API Client & Proxy:** Created centralized Axios client (`api.js`) and configured `vite.config.js` proxy forwarding `/api` calls directly to Spring Boot at `http://localhost:8080`.
-  * **Quality Assurance & Verification:** Performed end-to-end integration tests (PDF upload → Java Controller → Python Service → JPA Persistence → UI rendering). Authored technical setup documentation and validation scripts.
-
----
-
-## 🏛️ System Architecture
-
-```
-                                      ┌─────────────────────────────────────┐
-                                      │       HR Recruiter Browser UI       │
-                                      │        (React SPA on :5173)         │
-                                      └──────────────────┬──────────────────┘
-                                                         │
-                                                         │ HTTP REST (/api/*)
-                                                         ▼
-                                      ┌─────────────────────────────────────┐
-                                      │      Java Spring Boot Backend       │
-                                      │       (Spring Boot on :8080)        │
-                                      │                                     │
-                                      │   • JobController (Varad)           │
-                                      │   • CandidateService (Aditya)       │
-                                      │   • Job & Candidate Repos (Varad)   │
-                                      └─────────┬───────────────────┬───────┘
-                                                │                   │
-                  Internal HTTP Multipart POST  │                   │ JPA / Hibernate
-                      (/parse-and-score)        │                   │
-                                                ▼                   ▼
-     ┌──────────────────────────────────────────────┐    ┌──────────────────┐
-     │           Python AI Microservice             │    │    Embedded H2   │
-     │           (FastAPI on :8001)                 │    │     Database     │
-     │                                              │    │   (In-Memory)    │
-     │   • main.py: API Router (Kshitij)            │    └──────────────────┘
-     │   • parser.py: PDF / Skill Extractor (Kshitij)│
-     │   • scorer.py: OpenAI / Keyword (Kshitij)    │
-     └──────────────────────────────────────────────┘
+smart-hire-project/
+├── smart-hire-ai-service/         # Python Microservice (Port 8001)
+│   ├── main.py                    # FastAPI server & /parse-and-score endpoint
+│   ├── parser.py                  # PDF/TXT extraction & skill identification
+│   ├── scorer.py                  # AI evaluation engine (OpenAI / keyword fallback)
+│   ├── requirements.txt           # Dependencies
+│   └── .env.example               # Optional OpenAI API Key configuration
+│
+├── smart-hire-backend/            # Java Spring Boot Backend (Port 8080)
+│   ├── pom.xml                    # Maven build configuration (Java 17+, Spring Boot 3)
+│   ├── mvnw / mvnw.cmd            # Maven wrapper (runs with zero pre-installed Maven)
+│   └── src/
+│       └── main/
+│           ├── resources/
+│           │   └── application.properties # H2 database & service configuration
+│           └── java/
+│               └── com/
+│                   └── smarthire/
+│                       ├── SmartHireApplication.java       # Spring Boot main class
+│                       ├── controller/
+│                       │   └── JobController.java          # REST API endpoints & CORS
+│                       ├── model/
+│                       │   ├── Job.java                    # JPA Job Entity
+│                       │   └── Candidate.java              # JPA Candidate Entity
+│                       ├── repository/
+│                       │   ├── JobRepository.java          # Spring Data JPA repository
+│                       │   └── CandidateRepository.java    # Spring Data JPA repository
+│                       └── service/
+│                           └── CandidateService.java       # Business logic & microservice client
+│
+└── frontend/                      # React UI Dashboard (Port 5173)
+    ├── src/
+    │   ├── components/            # Dashboard, JobForm, CandidateCard
+    │   ├── api.js                 # Axios API bindings
+    │   └── App.jsx
+    ├── package.json
+    └── vite.config.js             # Proxies /api to Spring Boot (:8080)
 ```
 
 ---
 
-## 🚦 Candidate Scoring Logic & Business Rules
+## 🚀 System Architecture & Workflow
 
-Candidates are scored between **0 and 100** by the evaluation engine and routed into distinct hiring categories:
+```
+[ Client / React Dashboard / Curl ]
+            │
+            │ 1. POST /jobs/{id}/apply (Multipart Resume)
+            ▼
+[ Java Spring Boot Backend ] (Port 8080)
+   ├── JobController receives upload request
+   ├── CandidateService fetches Job from H2 DB
+   │        │
+   │        │ 2. HTTP POST multipart (/parse-and-score) via RestTemplate
+   │        ▼
+   │  [ Python AI Microservice ] (Port 8001)
+   │     ├── parser.py: extracts text, candidate name, email, skills
+   │     ├── scorer.py: evaluates match against job requirements (0 - 100)
+   │     └── returns JSON evaluation
+   │        │
+   │        ▼
+   ├── CandidateService persists Candidate entity into H2 Database
+   └── Returns saved Candidate to client
+```
 
-| Score Bracket | Status | System Action & Recruiter Visibility |
+---
+
+## 🚦 Scoring Logic & Categorization
+
+| Score Range | Status | Action |
 |---|---|---|
-| **70 – 100** | `shortlisted` | Highest priority ranking; surfaced immediately in the recruiter interview queue. |
-| **40 – 69** | `talent_pool` | Qualified near-miss; archived into reusable Talent Pool for future job openings. |
-| **0 – 39** | `rejected` | Below threshold; recorded in database audit log but filtered out of main view. |
+| **70 – 100** | `shortlisted` | Highest priority ranking; immediately surfaces in interview queue |
+| **40 – 69** | `talent_pool` | Qualified near-miss; automatically saved to Talent Pool for future openings |
+| **0 – 39** | `rejected` | Below job threshold; logged in records |
 
 ---
 
-## 💻 How to Run the Entire Project
+## 🛠️ Step-by-Step Running Guide
 
-### Step 1: Start the Python AI Microservice (Port 8001)
-```powershell
+### 1. Start the Python AI Microservice (Port 8001)
+
+```bash
 cd smart-hire-project/smart-hire-ai-service
-# Activate virtual environment
+
+# Windows PowerShell:
 ..\..\.venv\Scripts\Activate.ps1
-# Run service
+
+# Install requirements if needed:
+pip install -r requirements.txt
+
+# Start the microservice:
 python -m uvicorn main:app --host 127.0.0.1 --port 8001 --reload
 ```
-*Health Check:* `http://127.0.0.1:8001/health`
 
-### Step 2: Start the Java Spring Boot Backend (Port 8080)
-```powershell
+- Health Check: `http://127.0.0.1:8001/health`
+- Swagger Docs: `http://127.0.0.1:8001/docs`
+
+---
+
+### 2. Start the Java Spring Boot Backend (Port 8080)
+
+```bash
 cd smart-hire-project/smart-hire-backend
-# Run with bundled Maven wrapper
-.\mvnw.cmd spring-boot:run
-```
-*Backend API:* `http://localhost:8080/`  
-*H2 Interactive Console:* `http://localhost:8080/h2-console` (`jdbc:h2:mem:smarthiredb`, user `sa`, blank password)
 
-### Step 3 (Optional): Start the React Frontend Dashboard (Port 5173)
-```powershell
+# Windows:
+.\mvnw.cmd spring-boot:run
+
+# Linux / macOS:
+./mvnw spring-boot:run
+```
+
+- Spring Boot API: `http://localhost:8080/`
+- Interactive H2 Database Console: `http://localhost:8080/h2-console`
+  - JDBC URL: `jdbc:h2:mem:smarthiredb`
+  - User: `sa`
+  - Password: *(leave blank)*
+
+---
+
+### 3. (Optional) Start the Frontend Dashboard (Port 5173)
+
+```bash
 cd smart-hire-project/frontend
 npm install
 npm run dev
 ```
-*Dashboard URL:* `http://localhost:5173`
+
+- Dashboard UI: `http://localhost:5173`
 
 ---
 
-## 🧪 Comprehensive API Endpoint Reference
+## 📡 API Reference
 
-| Method | Endpoint | Responsibility | Description |
-|---|---|---|---|
-| `GET` | `/` | Varad / Aditya | Health check & system status |
-| `GET` | `/jobs` | Varad | List all job postings |
-| `POST` | `/jobs` | Varad | Create a new job opening |
-| `GET` | `/jobs/{id}` | Varad | Retrieve job details by ID |
-| `DELETE` | `/jobs/{id}` | Varad | Delete job posting |
-| `POST` | `/jobs/{id}/apply` | Aditya / Kshitij | Upload resume (multipart), trigger AI scoring & save candidate |
-| `GET` | `/jobs/{id}/candidates` | Varad | Get candidates ranked by score for a job |
-| `GET` | `/talent-pool` | Varad | View candidates in Talent Pool (supports `?skill=`) |
-| `GET` | `/stats` | Varad / Aditya | Aggregate statistics (total jobs, candidates, shortlisted, avg score) |
-
----
-
-## 🎓 College Academic Highlights
-
-1. **Object-Oriented Design**: Clean implementation of POJOs, encapsulated entities, services, and repositories.
-2. **Spring Framework & Dependency Injection**: Loose coupling using `@Service`, `@Repository`, `@RestController`, and `@Autowired`/constructor injection.
-3. **Enterprise Persistence**: Object-Relational Mapping (ORM) via Hibernate and Spring Data JPA with database-agnostic repository interfaces.
-4. **Modern Microservice Architecture**: Decoupling compute-heavy NLP/AI tasks (Python) from transactional business logic and persistence (Java).
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` or `/api/health` | Health check & engine status |
+| `GET` | `/jobs` | List all job openings (includes pre-seeded demo jobs) |
+| `POST` | `/jobs` | Create a new job opening |
+| `GET` | `/jobs/{id}` | Retrieve specific job details |
+| `DELETE`| `/jobs/{id}` | Delete a job opening |
+| `POST` | `/jobs/{id}/apply` | Upload resume file (`multipart/form-data`) → Triggers AI scoring |
+| `GET` | `/jobs/{id}/candidates` | Get ranked candidates for a specific job |
+| `GET` | `/candidates/{id}` | Get individual candidate details |
+| `GET` | `/talent-pool` | Retrieve candidates in the talent pool (optional `?skill=`) |
+| `GET` | `/talent-pool/search` | Search talent pool by role/skill keyword (`?role=`) |
+| `GET` | `/stats` | Aggregate dashboard statistics |
